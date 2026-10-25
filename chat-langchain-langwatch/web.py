@@ -9,9 +9,10 @@ os.environ.setdefault("GRADIO_ANALYTICS_ENABLED", "False")
 
 import gradio as gr
 
-from chat import config, glossario
+from chat import config, glossario, observabilidade
 from chat.pipeline import Chat
 
+observabilidade.iniciar()
 chat = Chat()
 
 

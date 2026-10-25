@@ -32,6 +32,7 @@ mensagem abreviada
 | `chat/pipeline.py` | `init_chat_model`, cadeia LCEL de normalização, `create_agent` |
 | `cli.py` | Chat no terminal; `--lote` roda o TXT de perguntas |
 | `web.py` | Mesmo chat em Gradio (http://localhost:7860) |
+| `chat/observabilidade.py` | `langwatch.setup()` (Fase 2) |
 | `infra/` | Ollama (LLM local) em Docker + script do modelo |
 
 ## Pontos de LangChain no código
@@ -74,6 +75,63 @@ e `LLM_MODELO=openai:gpt-4.1-mini`. Nada mais muda.
   [tools]       pypi_pacote
 
 O pacote "langchain-ollama" já teve 26 versões publicadas.
+```
+
+## Fase 2 — LangWatch
+
+LangWatch é uma plataforma de observabilidade/avaliação de LLM apps. O SDK Python é
+OpenTelemetry por baixo: cada mensagem do chat vira um **trace**, e cada etapa vira
+um **span** filho, enviado via OTLP para `LANGWATCH_ENDPOINT`.
+
+### Pontos de LangWatch no código
+
+| Chamada | Onde | O que gera no painel |
+| --- | --- | --- |
+| `langwatch.setup()` | `observabilidade.iniciar` | Configura o exporter OTLP (lê `LANGWATCH_API_KEY`/`LANGWATCH_ENDPOINT`) |
+| `@langwatch.trace(name="chat-pacotes")` | `Chat.responder` | Um trace por mensagem (span raiz) |
+| `trace.update(input=, output=, metadata=)` | `Chat.responder` | Input/Output do trace; `thread_id` agrupa a conversa; `labels` vira filtro |
+| `trace.get_langchain_callback()` | `config={"callbacks": [...]}` nos `.invoke()` | Spans automáticos de chain, LLM (mensagens, modelo, tokens) e tools |
+| `langwatch.span(name="glossario")` | `Chat.responder` | Span manual para a etapa que não é LangChain |
+| `span.add_evaluation(name="consultou_api", passed=...)` | `Chat.responder` | Avaliação Pass/Fail na coluna EVALS e no trace |
+
+`run_name` no config do `.invoke()` dá nome aos spans (`normalizacao`, `agente`).
+
+### Árvore de spans de uma mensagem
+
+```
+chat-pacotes                (trace — @langwatch.trace)
+├─ glossario                (langwatch.span manual)
+├─ normalizacao             (callback LangChain: RunnableSequence)
+│  ├─ ChatPromptTemplate
+│  ├─ llm                   (ChatOllama — mensagens de entrada/saída)
+│  └─ StrOutputParser
+├─ agente                   (callback LangChain: grafo do create_agent)
+│  ├─ model → llm           (LLM pede a tool)
+│  ├─ tools → pypi_pacote   (chamada à API do PyPI)
+│  └─ model → llm           (LLM responde com o resultado)
+└─ consultou_api            (evaluation)
+```
+
+### Subindo o LangWatch
+
+Na gravação foi usado o LangWatch **self-hosted** (open source, Docker Compose),
+porque o container não alcançava `app.langwatch.ai`:
+
+```bash
+git clone --depth 1 https://github.com/langwatch/langwatch && cd langwatch
+cp .env.example .env   # troque NEXTAUTH_SECRET e CREDENTIALS_SECRET (openssl rand)
+docker compose -f infra/compose.yml --project-directory . up -d
+# http://localhost:5560 → criar conta → organização → "Manually" → Python → LangChain → Create a key
+```
+
+Com a nuvem é igual: crie a conta em https://app.langwatch.ai, gere a chave e use
+`LANGWATCH_ENDPOINT=https://app.langwatch.ai`.
+
+Depois, no `.env` do chat:
+
+```bash
+LANGWATCH_API_KEY=sk-lw-...
+LANGWATCH_ENDPOINT=http://localhost:5560
 ```
 
 ## Por que PyPI/npm como API pública

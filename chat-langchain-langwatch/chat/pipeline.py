@@ -4,10 +4,13 @@
    abreviada numa pergunta clara, usando só os termos do glossário encontrados.
 2. Resposta: um agente (create_agent) decide quais tools chamar (PyPI/npm)
    e responde com base no retorno delas.
+
+Fase 2: tudo é instrumentado com LangWatch (trace por mensagem, spans por etapa).
 """
 
 from dataclasses import dataclass, field
 
+import langwatch
 from langchain.agents import create_agent
 from langchain.chat_models import init_chat_model
 from langchain_core.messages import HumanMessage, ToolMessage
@@ -73,29 +76,61 @@ class Chat:
             checkpointer=InMemorySaver(),
         )
 
+    # Cada chamada vira um trace no LangWatch. Por padrão o decorator captura os
+    # argumentos e o retorno como input/output; aqui eles são definidos à mão com
+    # trace.update(), o que tem precedência (o retorno é um dataclass, pouco legível).
+    @langwatch.trace(name="chat-pacotes")
     def responder(self, mensagem: str, thread_id: str = "padrao") -> Resposta:
-        termos = glossario.encontrar(mensagem, self.glossario)
+        trace = langwatch.get_current_trace()
+        # thread_id agrupa os traces numa conversa; labels servem de filtro no painel.
+        trace.update(
+            input=mensagem,
+            metadata={"thread_id": thread_id, "labels": ["tutorial"], "modelo": config.LLM_MODELO},
+        )
+        # Callback que converte os eventos do LangChain (chain/LLM/tool start/end)
+        # em spans filhos deste trace. Precisa ir no config de cada .invoke().
+        callbacks = [trace.get_langchain_callback()]
+
+        # Span manual: etapa sem LangChain, que de outro modo não apareceria no trace.
+        with langwatch.span(name="glossario", type="span") as span:
+            termos = glossario.encontrar(mensagem, self.glossario)
+            span.update(input=mensagem, output=termos)
 
         # Sem abreviação conhecida, não há o que traduzir: economiza uma chamada ao LLM.
         pergunta = mensagem
         if termos:
             pergunta = self.normalizar.invoke(
-                {"glossario": glossario.formatar(termos), "mensagem": mensagem}
+                {"glossario": glossario.formatar(termos), "mensagem": mensagem},
+                config={"callbacks": callbacks, "run_name": "normalizacao"},
             ).strip()
 
         # Entrada do agente é o estado do grafo: {"messages": [...]}. O config
         # "configurable.thread_id" escolhe qual histórico o checkpointer usa.
         estado = self.agente.invoke(
             {"messages": [HumanMessage(pergunta)]},
-            config={"configurable": {"thread_id": thread_id}},
+            config={
+                "configurable": {"thread_id": thread_id},
+                "callbacks": callbacks,
+                "run_name": "agente",
+            },
         )
-        return Resposta(
+        resposta = Resposta(
             mensagem=mensagem,
             termos=termos,
             pergunta=pergunta,
             texto=estado["messages"][-1].content,
             ferramentas=_tools_do_turno(estado["messages"]),
         )
+
+        trace.update(output=resposta.texto)
+        # Avaliação client-side: aparece na aba Evaluations do trace. Aqui a regra é
+        # simples (o agente consultou a API?), mas poderia ser qualquer métrica.
+        langwatch.get_current_span().add_evaluation(
+            name="consultou_api",
+            passed=bool(resposta.ferramentas),
+            details=f"tools chamadas: {resposta.ferramentas or 'nenhuma'}",
+        )
+        return resposta
 
 
 def _tools_do_turno(mensagens) -> list[str]:
