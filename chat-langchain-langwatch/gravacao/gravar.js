@@ -410,6 +410,9 @@ async function main() {
   await perguntar('qual a últ. ver. do lw?');
   await legenda('Primeira resposta ok.');
   await perguntar('qts rel. o lg já teve?');
+  // O roteiro abaixo depende do bug acontecer; se o modelo acertar, aborta em vez de mentir.
+  const bast = await page.locator('details').last().textContent();
+  if (!/tools:\s*-/.test(bast)) throw new Error('bug não reproduziu: ' + bast);
   await legenda('Opa: "não há informação"? O PyPI tem esse dado. Vamos investigar no LangWatch.');
 
   await esperarTraces(slug, 'qts rel. o lg já teve?', 1); await aplicarOverlay();
