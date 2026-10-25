@@ -54,6 +54,8 @@ def criar_llm():
     if config.LLM_MODELO.startswith("ollama:"):
         # reasoning=False desliga o modo "thinking" do Qwen3; num_ctx = janela de contexto.
         extras = {"base_url": config.OLLAMA_URL, "reasoning": False, "num_ctx": 8192}
+        if config.OLLAMA_NUM_THREAD:
+            extras["num_thread"] = config.OLLAMA_NUM_THREAD
     return init_chat_model(config.LLM_MODELO, temperature=0, **extras)
 
 
