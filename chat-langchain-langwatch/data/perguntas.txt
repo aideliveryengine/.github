@@ -1,0 +1,8 @@
+# Perguntas do roteiro (escritas de propósito de forma abreviada).
+# Uma pergunta por linha; linhas com # são ignoradas.
+qual a últ. ver. do lc?
+qual a lic. do lw e a req. py?
+qdo saiu a últ. ver. do lg?
+qts rel. o lco já teve?
+lc vs lcjs: qual a últ. ver. de cada?
+quais as deps do lw?

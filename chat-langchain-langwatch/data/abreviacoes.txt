@@ -1,0 +1,29 @@
+# Glossário de abreviações usadas nas perguntas.
+# Formato: termo = significado   (linhas com # são comentários)
+# O termo é comparado sem diferenciar maiúsculas/minúsculas.
+
+lc = pacote "langchain" no PyPI
+lg = pacote "langgraph" no PyPI
+lw = pacote "langwatch" no PyPI
+lco = pacote "langchain-ollama" no PyPI
+lcjs = pacote "langchain" no npm (JavaScript)
+pkg = pacote
+lib = biblioteca (pacote)
+últ. = última
+ult = última
+ver. = versão
+v. = versão
+lic. = licença
+deps = dependências (requires_dist)
+dep. = dependências (requires_dist)
+req. py = versão mínima do Python exigida (requires_python)
+py = Python
+rel. = releases (versões publicadas)
+desc. = descrição (summary)
+qdo = quando (data de publicação)
+qts = quantas
+qtd = quantidade
+pq = por que
+vs = comparado com
+c/ = com
+s/ = sem

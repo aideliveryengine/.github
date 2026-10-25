@@ -1,0 +1,13 @@
+# LLM local via Ollama. Suba com: docker compose -f infra/docker-compose.yml up -d
+services:
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+      - ./modelos:/models
+    restart: unless-stopped
+
+volumes:
+  ollama-data:
