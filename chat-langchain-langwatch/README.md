@@ -108,7 +108,8 @@ um **span** filho, enviado via OTLP para `LANGWATCH_ENDPOINT`.
   Gradio. `web.py` roda cada mensagem num contexto OTel vazio
   (`otel_context.attach(Context())`) para ela ser um trace próprio.
 - **Threads do llama.cpp:** com mais threads que cores livres (ex.: navegador gravando
-  vídeo ao mesmo tempo), a geração caía de ~7 para ~0,25 token/s. `OLLAMA_NUM_THREAD` fixa o valor.
+  vídeo ao mesmo tempo), a geração caía de ~7 para ~0,25 token/s. `OLLAMA_NUM_THREAD` fixa o valor;
+  na gravação, o navegador rodou com `nice` e sem animações durante as esperas.
 
 ### Árvore de spans de uma mensagem
 
@@ -160,7 +161,10 @@ fazia o agente responder "não há informação" no 2º turno. No painel:
    ("cada pergunta é uma consulta nova").
 4. Reteste: avaliação **Pass** e `tools → pypi_pacote` no waterfall.
 
-Reproduzia 2/2 antes e passou 6/6 depois (temperatura 0).
+Reproduzia 2/2 antes e passou 6/6 depois (temperatura 0, Ollama com o padrão de 4 threads).
+Detalhe: o caso é sensível à numérica — com 2 ou 3 threads o mesmo modelo chamava a tool
+mesmo sem a correção. Ou seja, é um comportamento frágil do modelo, exatamente o tipo de
+coisa que só aparece com observabilidade + avaliação rodando sobre o tráfego real.
 
 ## Gravação (vídeo + roteiro)
 
@@ -176,7 +180,7 @@ Reproduzia 2/2 antes e passou 6/6 depois (temperatura 0).
 Para regravar (LangWatch zerado, Ollama no ar, `.env` sem `LANGWATCH_API_KEY`):
 
 ```bash
-PY=$(which python) node gravacao/gravar.js && python gravacao/montar.py
+PY=$(which python) nice -n 19 node gravacao/gravar.js && python gravacao/montar.py
 ```
 
 ## Por que PyPI/npm como API pública

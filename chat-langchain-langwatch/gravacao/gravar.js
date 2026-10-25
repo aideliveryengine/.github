@@ -172,6 +172,10 @@ async function esperarWeb() {
 
 async function perguntar(texto) {
   const antes = await page.locator('text=bastidores').count();
+  // Sem animação nem cronômetro do Gradio: menos repaint = menos CPU no navegador,
+  // que senão disputa os cores com o llama.cpp e derruba a geração.
+  await page.addStyleTag({ content: '.progress-text,.eta-bar,.meta-text,.timer,.progress-level{display:none!important}'
+    + ' *{animation:none!important;transition:none!important}' });
   const caixa = page.locator('textarea').first();
   await caixa.click();
   await caixa.pressSequentially(texto, { delay: 70 });
