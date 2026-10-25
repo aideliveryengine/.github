@@ -134,6 +134,37 @@ LANGWATCH_API_KEY=sk-lw-...
 LANGWATCH_ENDPOINT=http://localhost:5560
 ```
 
+### Caso real encontrado com o LangWatch
+
+Na mesma conversa, `qual a últ. ver. do lw?` seguida de `qts rel. o lg já teve?`
+fazia o agente responder "não há informação" no 2º turno. No painel:
+
+1. **Trace Explorer**: o 2º trace com `consultou_api` = **Fail**.
+2. **Waterfall**: dentro de `agente` só havia um `model → llm`, sem span `tools`.
+   O LLM, com o histórico do checkpointer, achou que não precisava consultar de novo.
+3. **Correção** (`gravacao/correcao_prompt.diff`): regra no system prompt
+   ("cada pergunta é uma consulta nova").
+4. Reteste: avaliação **Pass** e `tools → pypi_pacote` no waterfall.
+
+Reproduzia 2/2 antes e passou 6/6 depois (temperatura 0).
+
+## Gravação (vídeo + roteiro)
+
+| Arquivo | O que é |
+| --- | --- |
+| `gravacao/tutorial.mp4` | Vídeo do tutorial, com legendas na tela; esperas do LLM aceleradas |
+| `gravacao/ROTEIRO.md` | A explicação em texto, por parte, com timestamps do vídeo |
+| `gravacao/tutorial.srt` | As mesmas legendas em SRT |
+| `gravacao/gravar.js` | Roteiro em Playwright: cenas de código, cadastro no LangWatch, chat, traces |
+| `gravacao/cenas.py` | Gera as páginas de código/cartões (Pygments) que aparecem no vídeo |
+| `gravacao/montar.py` | ffmpeg: acelera esperas, gera MP4, SRT e o ROTEIRO.md |
+
+Para regravar (LangWatch zerado, Ollama no ar, `.env` sem `LANGWATCH_API_KEY`):
+
+```bash
+PY=$(which python) node gravacao/gravar.js && python gravacao/montar.py
+```
+
 ## Por que PyPI/npm como API pública
 
 São abertas, sem chave e respostas objetivas (versão, licença, data), o que deixa
