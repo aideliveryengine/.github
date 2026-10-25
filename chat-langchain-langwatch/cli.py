@@ -7,7 +7,7 @@
 import argparse
 import uuid
 
-from chat import config, glossario, observabilidade
+from chat import config, glossario
 from chat.pipeline import Chat, Resposta
 
 
@@ -24,7 +24,6 @@ def main() -> None:
     parser.add_argument("--lote", action="store_true", help="roda data/perguntas.txt")
     args = parser.parse_args()
 
-    observabilidade.iniciar()
     chat = Chat()
     thread_id = uuid.uuid4().hex[:8]  # uma conversa por execução
 

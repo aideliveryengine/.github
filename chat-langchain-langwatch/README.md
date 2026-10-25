@@ -32,7 +32,7 @@ mensagem abreviada
 | `chat/pipeline.py` | `init_chat_model`, cadeia LCEL de normalização, `create_agent` |
 | `cli.py` | Chat no terminal; `--lote` roda o TXT de perguntas |
 | `web.py` | Mesmo chat em Gradio (http://localhost:7860) |
-| `chat/observabilidade.py` | `langwatch.setup()` (Fase 2) |
+| `chat/observabilidade.py` | `langwatch.setup()` e filtro de spans HTTP (Fase 2) |
 | `infra/` | Ollama (LLM local) em Docker + script do modelo |
 
 ## Pontos de LangChain no código
@@ -87,7 +87,7 @@ um **span** filho, enviado via OTLP para `LANGWATCH_ENDPOINT`.
 
 | Chamada | Onde | O que gera no painel |
 | --- | --- | --- |
-| `langwatch.setup()` | `observabilidade.iniciar` | Configura o exporter OTLP (lê `LANGWATCH_API_KEY`/`LANGWATCH_ENDPOINT`) |
+| `langwatch.setup(span_exclude_rules=...)` | `observabilidade.iniciar` | Configura o exporter OTLP (lê `LANGWATCH_API_KEY`/`LANGWATCH_ENDPOINT`) e filtra spans |
 | `@langwatch.trace(name="chat-pacotes")` | `Chat.responder` | Um trace por mensagem (span raiz) |
 | `trace.update(input=, output=, metadata=)` | `Chat.responder` | Input/Output do trace; `thread_id` agrupa a conversa; `labels` vira filtro |
 | `trace.get_langchain_callback()` | `config={"callbacks": [...]}` nos `.invoke()` | Spans automáticos de chain, LLM (mensagens, modelo, tokens) e tools |
@@ -95,6 +95,20 @@ um **span** filho, enviado via OTLP para `LANGWATCH_ENDPOINT`.
 | `span.add_evaluation(name="consultou_api", passed=...)` | `Chat.responder` | Avaliação Pass/Fail na coluna EVALS e no trace |
 
 `run_name` no config do `.invoke()` dá nome aos spans (`normalizacao`, `agente`).
+
+### Pegadinhas de OpenTelemetry (encontradas na prática)
+
+- **Ordem do setup:** o `@langwatch.trace` faz um setup implícito quando o módulo é
+  importado. Por isso `pipeline.py` importa `observabilidade` (que chama `setup()`)
+  antes dos decorators; senão as `span_exclude_rules` não chegam ao exporter.
+- **Provider global:** `setup()` registra um TracerProvider global. O FastAPI usado
+  pelo Gradio também emite spans OTel, e as requisições HTTP (`GET /assets/...`,
+  `POST /gradio_api/...`) iam parar no LangWatch. `span_exclude_rules` descarta esse ruído.
+- **Trace aninhado:** pelo mesmo motivo, o `chat-pacotes` virava filho do span HTTP do
+  Gradio. `web.py` roda cada mensagem num contexto OTel vazio
+  (`otel_context.attach(Context())`) para ela ser um trace próprio.
+- **Threads do llama.cpp:** com mais threads que cores livres (ex.: navegador gravando
+  vídeo ao mesmo tempo), a geração caía de ~7 para ~0,25 token/s. `OLLAMA_NUM_THREAD` fixa o valor.
 
 ### Árvore de spans de uma mensagem
 

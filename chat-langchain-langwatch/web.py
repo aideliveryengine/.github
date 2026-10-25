@@ -8,17 +8,23 @@ import os
 os.environ.setdefault("GRADIO_ANALYTICS_ENABLED", "False")
 
 import gradio as gr
+from opentelemetry import context as otel_context
 
-from chat import config, glossario, observabilidade
+from chat import config, glossario
 from chat.pipeline import Chat
 
-observabilidade.iniciar()
 chat = Chat()
 
 
 def responder(mensagem: str, _historico: list, request: gr.Request) -> str:
-    # O histórico fica no checkpointer do agente; a sessão do Gradio vira o thread_id.
-    r = chat.responder(mensagem, thread_id=request.session_hash)
+    # Contexto OTel vazio: sem isso o trace "chat-pacotes" vira filho do span HTTP
+    # que o FastAPI (por baixo do Gradio) abriu, em vez de ser um trace próprio.
+    token = otel_context.attach(otel_context.Context())
+    try:
+        # O histórico fica no checkpointer do agente; a sessão do Gradio vira o thread_id.
+        r = chat.responder(mensagem, thread_id=request.session_hash)
+    finally:
+        otel_context.detach(token)
     bastidores = (
         f"glossário: {', '.join(r.termos) or '-'}  \n"
         f"normalizada: {r.pergunta}  \n"

@@ -18,7 +18,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langgraph.checkpoint.memory import InMemorySaver
 
-from chat import config, glossario
+from chat import config, glossario, observabilidade  # noqa: F401  (setup antes dos decorators)
 from chat.ferramentas import FERRAMENTAS
 
 PROMPT_NORMALIZACAO = ChatPromptTemplate.from_messages([

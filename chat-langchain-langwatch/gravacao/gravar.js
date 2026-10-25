@@ -373,9 +373,13 @@ async function main() {
 
   // código da fase 2
   await ir(cenaCodigo('12_obs', path.join(RAIZ, 'chat/observabilidade.py'), 'chat/observabilidade.py  (novo)'));
-  await foco('langwatch.setup()', 1);
-  await legenda('<code>langwatch.setup()</code> lê a chave e o endpoint do ambiente e registra um exporter OTLP.');
-  await legenda('Sem chave, o app segue igual e só não envia traces. <code>cli.py</code> e <code>web.py</code> chamam <code>iniciar()</code> no início.');
+  await foco('langwatch.setup(span', 1);
+  await legenda('<code>langwatch.setup()</code> lê a chave e o endpoint do ambiente e registra um TracerProvider OTel com exporter OTLP.');
+  await legenda('Sem chave, o app segue igual e só não envia traces.');
+  await foco('_RUIDO_HTTP = [', 4);
+  await legenda('Pegadinha real: o provider é global, e o FastAPI (sob o Gradio) também emite spans. <code>span_exclude_rules</code> descarta esse ruído HTTP.');
+  await foco('Importado no topo', 2);
+  await legenda('Outra: o setup precisa rodar antes do <code>@langwatch.trace</code> ser avaliado; senão o decorator faz um setup implícito sem as regras.');
 
   await ir(cenaCodigo('13_pipeline2', path.join(RAIZ, 'chat/pipeline.py'), 'chat/pipeline.py  (Fase 2)'));
   await foco('@langwatch.trace(', 2);
