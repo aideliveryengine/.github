@@ -229,6 +229,7 @@ async function main() {
   });
   await ctx.addInitScript(OVERLAY);
   page = await ctx.newPage();
+  page.setDefaultTimeout(120000);  // a UI do LangWatch demora a hidratar com a CPU dividida
   t0 = Date.now();
 
   // ---------------- abertura ----------------
@@ -323,8 +324,8 @@ async function main() {
 
   await ir(LW + '/auth/signup');
   await legenda('Instalação zerada. Primeiro passo: criar a conta (esta instalação não envia e-mail).');
-  await page.fill('input[name=email]', '');
-  await page.locator('input[name=email]').pressSequentially('tutorial@langwatch.local', { delay: 40 });
+  await page.fill('input[type=email]', '');
+  await page.locator('input[type=email]').pressSequentially('tutorial@langwatch.local', { delay: 40 });
   await page.click('button[type=submit]');
   await esperar(1500);
   await page.locator('input[name=password]').pressSequentially('tutorial-123456', { delay: 40 });
