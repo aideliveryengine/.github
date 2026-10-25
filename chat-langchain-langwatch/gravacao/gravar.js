@@ -38,6 +38,8 @@ const OVERLAY = `
       #__leg{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);max-width:1180px;z-index:2147483647;
         background:rgba(12,14,18,.93);color:#fff;font:500 23px/1.45 system-ui,'DejaVu Sans',sans-serif;
         padding:14px 26px;border-radius:12px;box-shadow:0 6px 30px rgba(0,0,0,.45);border:1px solid #3a4150}
+      #__leg.topo{bottom:auto;top:64px}
+      #__leg,#__parte,#__ff{pointer-events:none}
       #__leg:empty{display:none}
       #__leg code{font-family:'JetBrains Mono',monospace;color:#e5c07b;font-size:21px}
       #__parte{position:fixed;right:18px;top:14px;z-index:2147483647;background:#61afef;color:#0d1117;
@@ -50,6 +52,8 @@ const OVERLAY = `
     for (const id of ['__leg', '__parte', '__ff']) {
       const d = document.createElement('div'); d.id = id; document.body.appendChild(d);
     }
+    // No chat (Gradio) a caixa de texto fica embaixo: legenda vai para o topo.
+    if (location.port === '7860') document.getElementById('__leg').classList.add('topo');
   };
   window.__overlay = (leg, parte, ff) => {
     montar();
