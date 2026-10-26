@@ -170,12 +170,19 @@ coisa que só aparece com observabilidade + avaliação rodando sobre o tráfego
 
 | Arquivo | O que é |
 | --- | --- |
-| `gravacao/tutorial.mp4` | Vídeo do tutorial, com legendas na tela; esperas do LLM aceleradas |
+| `gravacao/tutorial.mp4` | Vídeo do tutorial (13:33, 1440×900), legendas na tela; esperas do LLM aceleradas |
 | `gravacao/ROTEIRO.md` | A explicação em texto, por parte, com timestamps do vídeo |
 | `gravacao/tutorial.srt` | As mesmas legendas em SRT |
 | `gravacao/gravar.js` | Roteiro em Playwright: cenas de código, cadastro no LangWatch, chat, traces |
 | `gravacao/cenas.py` | Gera as páginas de código/cartões (Pygments) que aparecem no vídeo |
 | `gravacao/montar.py` | ffmpeg: acelera esperas, gera MP4, SRT e o ROTEIRO.md |
+
+Edição da tomada final (via `tmp/edicao.json`, suportado pelo `montar.py`): o trecho de
+cadastro foi acelerado ×8 (a UI demorava a responder) e um trecho em que o clique na aba
+**Conversation** falhou foi substituído por um clipe curto da mesma aba, gravado logo depois
+sobre os mesmos dados. O `gravar.js` já usa o atalho `c`, então uma nova gravação não precisa disso.
+
+A conta e a chave do LangWatch que aparecem no vídeo são de uma instalação local descartável.
 
 Para regravar (LangWatch zerado, Ollama no ar, `.env` sem `LANGWATCH_API_KEY`):
 

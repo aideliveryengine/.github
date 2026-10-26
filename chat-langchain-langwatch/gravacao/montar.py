@@ -6,6 +6,13 @@ Lê tmp/video.webm + tmp/eventos.json (gerados pelo gravar.js) e produz:
 - tutorial.mp4   trechos de espera do LLM acelerados, H.264
 - tutorial.srt   legendas com os tempos do vídeo final
 - ROTEIRO.md     o texto explicativo, por parte, com timestamps
+
+Edição opcional pós-gravação em tmp/edicao.json (tempos do vídeo bruto):
+    {"aceleradas": [{"ini": 321, "fim": 419, "fator": 8}],
+     "cortes": [{"ini": 883, "fim": 1012,
+                 "inserir": {"arquivo": "insercao.webm", "ini": 14, "fim": 29,
+                             "legendas": [{"t": 1.5, "dur": 6, "texto": "...", "parte": "..."}]}}]}
+Legendas do bruto que caem dentro de um corte são descartadas.
 """
 
 import html
@@ -16,42 +23,68 @@ from pathlib import Path
 
 AQUI = Path(__file__).resolve().parent
 TMP = AQUI / "tmp"
+BRUTO = "video.webm"
 
 
-def segmentos(duracao: float, aceleradas: list[dict]) -> list[tuple[float, float, float]]:
-    """Divide [0, duracao] em (ini, fim, fator), com fator 1 fora dos trechos acelerados."""
+def segmentos(duracao: float, aceleradas: list[dict], cortes: list[dict]) -> list[dict]:
+    """Linha do tempo final: trechos do bruto (com fator de velocidade) e inserções."""
+    marcos = [{"ini": a["ini"], "fim": a["fim"], "fator": float(a["fator"])} for a in aceleradas]
+    marcos += [{**c, "corte": True} for c in cortes]
     segs, cursor = [], 0.0
-    for a in sorted(aceleradas, key=lambda a: a["ini"]):
-        if a["ini"] > cursor:
-            segs.append((cursor, a["ini"], 1.0))
-        segs.append((a["ini"], a["fim"], float(a["fator"])))
-        cursor = a["fim"]
+    for m in sorted(marcos, key=lambda m: m["ini"]):
+        if m["ini"] > cursor:
+            segs.append({"src": BRUTO, "ini": cursor, "fim": m["ini"], "fator": 1.0})
+        if m.get("corte"):
+            ins = m.get("inserir")
+            if ins:
+                segs.append({"src": ins["arquivo"], "ini": ins["ini"], "fim": ins["fim"], "fator": 1.0,
+                             "legendas": ins.get("legendas", [])})
+        else:
+            segs.append({"src": BRUTO, "ini": m["ini"], "fim": m["fim"], "fator": m["fator"]})
+        cursor = m["fim"]
     if cursor < duracao:
-        segs.append((cursor, duracao, 1.0))
+        segs.append({"src": BRUTO, "ini": cursor, "fim": duracao, "fator": 1.0})
     return segs
 
 
-def mapear(t: float, segs) -> float:
-    """Tempo no vídeo bruto -> tempo no vídeo final."""
+def mapear(t: float, segs) -> float | None:
+    """Tempo no vídeo bruto -> tempo no vídeo final (None se caiu num corte)."""
     final = 0.0
-    for ini, fim, fator in segs:
-        if t <= fim:
-            return final + (max(t, ini) - ini) / fator
-        final += (fim - ini) / fator
+    for s in segs:
+        if s["src"] == BRUTO and s["ini"] <= t <= s["fim"]:
+            return final + (t - s["ini"]) / s["fator"]
+        if s["src"] == BRUTO and t < s["ini"]:
+            return None  # passou do ponto sem achar: estava dentro de um corte
+        final += (s["fim"] - s["ini"]) / s["fator"]
     return final
 
 
-def montar_video(segs, entrada: Path, saida: Path) -> None:
-    filtros, rotulos = [], []
-    for i, (ini, fim, fator) in enumerate(segs):
-        filtros.append(f"[0:v]trim=start={ini:.3f}:end={fim:.3f},setpts=(PTS-STARTPTS)/{fator}[v{i}]")
-        rotulos.append(f"[v{i}]")
-    filtros.append(f"{''.join(rotulos)}concat=n={len(segs)}:v=1:a=0,fps=25[out]")
+def inicio_final(seg_alvo, segs) -> float:
+    final = 0.0
+    for s in segs:
+        if s is seg_alvo:
+            return final
+        final += (s["fim"] - s["ini"]) / s["fator"]
+    raise ValueError("segmento não encontrado")
+
+
+def montar_video(segs, saida: Path) -> None:
+    # Um arquivo por trecho (seek na entrada) e depois concat sem recodificar.
+    # Um filter_complex único com vários trim do mesmo stream guarda frames demais na RAM.
+    partes = []
+    for i, s in enumerate(segs):
+        parte = TMP / f"seg{i:02d}.mp4"
+        subprocess.run([
+            "ffmpeg", "-y", "-loglevel", "error", "-ss", f"{s['ini']:.3f}", "-to", f"{s['fim']:.3f}",
+            "-i", str(TMP / s["src"]), "-vf", f"setpts=(PTS-STARTPTS)/{s['fator']},fps=25", "-an",
+            "-c:v", "libx264", "-preset", "medium", "-crf", "22", "-pix_fmt", "yuv420p", str(parte),
+        ], check=True)
+        partes.append(parte)
+    lista = TMP / "partes.txt"
+    lista.write_text("".join(f"file '{p}'\n" for p in partes))
     subprocess.run([
-        "ffmpeg", "-y", "-loglevel", "error", "-i", str(entrada),
-        "-filter_complex", ";".join(filtros), "-map", "[out]",
-        "-c:v", "libx264", "-preset", "medium", "-crf", "22", "-pix_fmt", "yuv420p",
-        "-movflags", "+faststart", str(saida),
+        "ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", str(lista),
+        "-c", "copy", "-movflags", "+faststart", str(saida),
     ], check=True)
 
 
@@ -70,22 +103,33 @@ def ts(seg: float, srt: bool = False) -> str:
 
 def main() -> None:
     ev = json.loads((TMP / "eventos.json").read_text(encoding="utf-8"))
-    segs = segmentos(ev["duracao"], ev["aceleradas"])
-    montar_video(segs, TMP / "video.webm", AQUI / "tutorial.mp4")
+    arq_edicao = TMP / "edicao.json"
+    edicao = json.loads(arq_edicao.read_text(encoding="utf-8")) if arq_edicao.exists() else {}
+    segs = segmentos(ev["duracao"], ev["aceleradas"] + edicao.get("aceleradas", []), edicao.get("cortes", []))
+    montar_video(segs, AQUI / "tutorial.mp4")
 
     legendas = []
     for i, l in enumerate(ev["legendas"]):
         ini = mapear(l["t"], segs)
+        if ini is None:
+            continue
         # Legenda acelerada fica até a próxima; as demais, pelo tempo de leitura.
         prox = ev["legendas"][i + 1]["t"] if i + 1 < len(ev["legendas"]) else ev["duracao"]
-        fim = mapear(prox, segs) if l.get("acelerada") else mapear(l["t"] + l["dur"], segs)
-        legendas.append({**l, "ini": ini, "fim": fim, "puro": texto_puro(l["texto"])})
+        fim = mapear(prox if l.get("acelerada") else l["t"] + l["dur"], segs)
+        legendas.append({**l, "ini": ini, "fim": fim if fim is not None else ini + l["dur"]})
+    for s in segs:
+        base = inicio_final(s, segs) if s.get("legendas") else 0
+        for l in s.get("legendas", []):
+            legendas.append({**l, "ini": base + l["t"], "fim": base + l["t"] + l["dur"]})
+    legendas.sort(key=lambda l: l["ini"])
+    for l in legendas:
+        l["puro"] = texto_puro(l["texto"])
 
     srt = "\n".join(f"{i}\n{ts(l['ini'], True)} --> {ts(l['fim'], True)}\n{l['puro']}\n"
                     for i, l in enumerate(legendas, 1))
     (AQUI / "tutorial.srt").write_text(srt, encoding="utf-8")
 
-    total = mapear(ev["duracao"], segs)
+    total = sum((s["fim"] - s["ini"]) / s["fator"] for s in segs)
     linhas = [
         "# Roteiro do vídeo",
         "",

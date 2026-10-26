@@ -448,7 +448,7 @@ async function main() {
   await clicarSpan('llm', 1);
   await legenda('O LLM respondeu direto, sem chamar <code>pypi_pacote</code>: como já havia consultado um pacote, achou que bastava.');
   await legenda('Isso só acontece no 2º turno da conversa (histórico no checkpointer). Sem os traces, seria difícil de achar.');
-  await page.getByText('Conversation', { exact: true }).first().click().catch(() => {});
+  await page.keyboard.press('c');  // atalho da aba Conversation (o clique no texto não abria)
   await esperar(2500);
   await legenda('Aba Conversation: os dois turnos agrupados pelo <code>thread_id</code> que enviamos na metadata.');
   await page.keyboard.press('Escape'); await esperar(800);
@@ -497,7 +497,8 @@ async function main() {
   console.log('ok', duracao.toFixed(1), 's');
 }
 
-main().catch(async (e) => {
+module.exports = { OVERLAY };
+if (require.main === module) main().catch(async (e) => {
   console.error(e);
   try { await page.screenshot({ path: path.join(TMP, 'erro.png') }); } catch {}
   if (web) web.kill('SIGKILL');
