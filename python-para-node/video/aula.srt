@@ -1,0 +1,271 @@
+1
+00:00:00,000 --> 00:00:08,755
+Fala! Este é um atalho para quem já é sênior em Node e TypeScript e quer programar Python de verdade, para o dia a dia e para entrevistas.
+
+2
+00:00:08,755 --> 00:00:18,049
+Em cada tópico eu mostro como você faria em TypeScript, do lado esquerdo, e o equivalente em Python, do lado direito. E principalmente: onde a analogia quebra.
+
+3
+00:00:18,049 --> 00:00:26,896
+Todo o código do vídeo está no repositório e foi executado: o TypeScript passa no tsc em modo strict, e o Python passa no mypy em modo strict.
+
+4
+00:00:26,896 --> 00:00:41,280
+Primeiro, o mapa. O nvm vira o uv ou o pyenv. O npm vira o uv, que é o gerenciador moderno, escrito em Rust e muito rápido. O package.json vira o pyproject.toml, e o lockfile vira o uv.lock.
+
+5
+00:00:41,280 --> 00:00:54,750
+A diferença conceitual mais importante: em Node, cada projeto tem o seu node_modules automaticamente. Em Python, por padrão, os pacotes vão para uma instalação global. Por isso existe o virtualenv: a pasta ponto venv é o seu node_modules.
+
+6
+00:00:54,750 --> 00:01:05,237
+O tsc vira o mypy ou o Pyright. O ESLint e o Prettier viram um único ruff. O jest vira o pytest. E o zod vira o Pydantic, que é praticamente onipresente em Python moderno.
+
+7
+00:01:05,237 --> 00:01:13,426
+No back-end: Express ou Nest viram FastAPI ou Django. Prisma vira SQLAlchemy. E filas como o BullMQ viram Celery ou RQ.
+
+8
+00:01:13,426 --> 00:01:20,856
+O pyproject.toml é o package.json. Nome, versão e a versão mínima do Python, que é o engines do Node.
+
+9
+00:01:20,856 --> 00:01:28,371
+As dependências ficam numa lista, com a versão na mesma string. Não existe acento circunflexo: você escreve maior ou igual.
+
+10
+00:01:28,371 --> 00:01:40,924
+As dev dependencies viram grupos de dependência. E a configuração das ferramentas, como ruff e mypy, fica no mesmo arquivo, nas seções tool. É como se o eslintrc e o tsconfig morassem dentro do package.json.
+
+11
+00:01:40,924 --> 00:01:53,501
+Atenção a uma diferença: o project scripts do Python não é o npm run. Ele cria um executável de linha de comando, como o campo bin do package.json. Para tarefas, a gente usa uv run, ou um Makefile.
+
+12
+00:01:53,501 --> 00:02:01,676
+No dia a dia: uv init cria o projeto, uv add instala e já salva no pyproject, e uv add dash dash dev é o save dev.
+
+13
+00:02:01,676 --> 00:02:10,944
+O uv sync com frozen é o npm ci. O uv run roda qualquer coisa dentro da venv, sem você precisar ativar nada. E o uvx é o npx.
+
+14
+00:02:10,944 --> 00:02:18,188
+Em Python, como em Node, o arquivo é o módulo. Mas não existe export: tudo que está no nível do módulo é importável.
+
+15
+00:02:18,188 --> 00:02:27,618
+Privado é convenção: um underline na frente do nome. Ninguém impede o import, mas o linter e o time entendem que é interno. O dunder all só controla o import asterisco.
+
+16
+00:02:27,618 --> 00:02:38,635
+Os imports são absolutos, a partir do pacote: from pedidos api ponto precos import com imposto. E repare no estilo: funções e variáveis em snake case, classes em PascalCase.
+
+17
+00:02:38,635 --> 00:02:47,377
+E este é o idioma que você vai ver em todo lugar: if dunder name igual a dunder main. É o equivalente de checar se o arquivo foi executado direto, e não importado.
+
+18
+00:02:47,377 --> 00:02:58,454
+A pergunta que você fez: existe um TypeScript do Python? Existe, e ele já vem na linguagem. São os type hints. Não tem compilação: você escreve as anotações no próprio Python.
+
+19
+00:02:58,454 --> 00:03:08,384
+Quem confere os tipos é uma ferramenta separada. O mypy é o clássico, e o Pyright é o do VS Code. Rodar o mypy no CI é o equivalente ao tsc no emit.
+
+20
+00:03:08,384 --> 00:03:18,117
+E igual ao TypeScript: os tipos somem em runtime. Para validar o que vem de fora, como JSON e variáveis de ambiente, você usa o Pydantic, que é o zod do Python.
+
+21
+00:03:18,117 --> 00:03:28,478
+A interface do TypeScript é estrutural. Em Python, o equivalente exato é o Protocol: qualquer classe que tenha o método buscar com essa assinatura satisfaz o contrato.
+
+22
+00:03:28,478 --> 00:03:35,784
+A union de strings vira Literal. E o alias type existe em Python desde a versão três ponto doze, com a mesma palavra-chave.
+
+23
+00:03:35,784 --> 00:03:44,066
+O tipo de um objeto literal vira um TypedDict. Na prática, para dados de domínio, você vai preferir dataclass ou Pydantic, que eu mostro já já.
+
+24
+00:03:44,066 --> 00:03:53,485
+Repare que a classe Python não declara implements. O mypy confere a estrutura na atribuição lá embaixo. E o self é explícito, sempre o primeiro parâmetro do método.
+
+25
+00:03:53,485 --> 00:04:01,848
+Generics: a partir do três ponto doze, o parâmetro de tipo fica entre colchetes, logo depois do nome. Muito parecido com o TypeScript.
+
+26
+00:04:01,848 --> 00:04:10,679
+No zod, você escreve o schema e deriva o tipo com z infer. No Pydantic é o contrário: a classe já é o tipo e o schema ao mesmo tempo.
+
+27
+00:04:10,679 --> 00:04:21,004
+As restrições vêm do Field: maior que zero, tamanho mínimo. E o tipo UUID é convertido de verdade: depois da validação, o campo id é um objeto UUID, não uma string.
+
+28
+00:04:21,004 --> 00:04:28,431
+Model validate json é o parse. Ele já faz o parse do JSON e a validação numa passada só, em Rust, e é bem rápido.
+
+29
+00:04:28,431 --> 00:04:39,266
+Não tem um safe parse que devolve sucesso ou erro: em Python, a falha é uma exceção, a ValidationError. Esse é o estilo da linguagem: é mais fácil pedir perdão do que permissão.
+
+30
+00:04:39,266 --> 00:04:51,485
+Para objetos de dados, o Python tem a dataclass. Você declara os campos com tipo, e o construtor, a igualdade e a representação são gerados. Frozen é o readonly, e slots economiza memória.
+
+31
+00:04:51,485 --> 00:05:00,950
+No TypeScript você escreve um equals na mão, porque o igual igual igual compara referência. Na dataclass, o igual igual compara os valores dos campos.
+
+32
+00:05:00,950 --> 00:05:13,760
+Os métodos com dois underlines, os dunder methods, são o protocolo da linguagem. Dunder add define o operador mais, e dunder str é o toString. É assim que o Python deixa sua classe se comportar como um tipo nativo.
+
+33
+00:05:13,760 --> 00:05:20,624
+E para dinheiro, use Decimal. Ele está na biblioteca padrão, e evita o clássico zero ponto um mais zero ponto dois.
+
+34
+00:05:20,624 --> 00:05:30,707
+Em Node, para parâmetros opcionais, a gente usa um options object com destructuring. Em Python, isso é nativo: tudo depois do asterisco só pode ser passado pelo nome.
+
+35
+00:05:30,707 --> 00:05:42,635
+O asterisco args é o rest parameter, e o dois asteriscos kwargs recebe argumentos nomeados soltos, como um objeto de opções livre. No spread de objeto, você usa dois asteriscos dentro do dicionário.
+
+36
+00:05:42,635 --> 00:05:53,384
+E aqui está a pegadinha número um de entrevista. Em Python, o valor default é criado uma vez só, quando a função é definida. Se ele for uma lista, todas as chamadas compartilham a mesma lista.
+
+37
+00:05:53,384 --> 00:06:02,675
+No JavaScript, a segunda chamada devolve só b. No Python, devolve a e b. A correção é usar None como default e criar a lista dentro da função.
+
+38
+00:06:02,675 --> 00:06:14,018
+Em Node, para adicionar retry a uma função, você escreve uma higher order function. Em Python a ideia é exatamente a mesma: o decorator é só uma função que recebe uma função e devolve outra.
+
+39
+00:06:14,018 --> 00:06:26,131
+A diferença é o açúcar sintático. Arroba com retry em cima da função é a mesma coisa que buscar igual com retry de buscar. Foi exatamente isso que usamos no tutorial do LangWatch, com o arroba langwatch ponto trace.
+
+40
+00:06:26,131 --> 00:06:38,627
+Dois detalhes de sênior. Functools wraps preserva o nome e a docstring da função original. E o ParamSpec, os dois asteriscos P, preserva a assinatura para o type checker, como o tipo A extends unknown array do TypeScript.
+
+41
+00:06:38,627 --> 00:06:48,170
+Filter mais map vira uma list comprehension. Object from entries vira uma dict comprehension. E sum com uma generator expression soma sem criar uma lista intermediária.
+
+42
+00:06:48,170 --> 00:06:58,887
+Generators funcionam como os do JavaScript: yield produz valores sob demanda, e yield from é o yield asterisco. O operador morsa, dois pontos igual, atribui e testa na mesma expressão.
+
+43
+00:06:58,887 --> 00:07:12,557
+E cuidado com a truthiness: em JavaScript, array e objeto vazios são verdadeiros. Em Python, lista vazia, dicionário vazio, string vazia, zero e None são falsos. Por isso, em Python, o idioma é if not lista.
+
+44
+00:07:12,557 --> 00:07:20,951
+Exceções de domínio são classes que herdam de Exception. Em Python é muito comum criar uma hierarquia, porque o tratamento é feito pelo tipo.
+
+45
+00:07:20,951 --> 00:07:32,845
+O using do TypeScript cinco ponto dois é a mesma ideia do with do Python. O with garante que o recurso é fechado ao sair do bloco, mesmo com exceção. Conexão, arquivo, lock, transação: tudo usa with.
+
+46
+00:07:32,845 --> 00:07:39,784
+O jeito mais simples de criar um é o decorator contextmanager: tudo antes do yield é a abertura, e o finally é o dispose.
+
+47
+00:07:39,784 --> 00:07:48,135
+O except filtra pelo tipo, sem instanceof. Raise from encadeia a causa, como o cause do Error. E tem o else, que só roda se não houve exceção.
+
+48
+00:07:48,135 --> 00:07:54,723
+Async e await são quase iguais. Mas tem uma diferença fundamental, que cai muito em entrevista.
+
+49
+00:07:54,723 --> 00:08:05,856
+Em JavaScript, a Promise é ansiosa: chamou a função, ela já está rodando. Em Python, chamar uma função async só cria um objeto coroutine. Nada roda até alguém dar await, ou criar uma task.
+
+50
+00:08:05,856 --> 00:08:15,507
+O Promise all vira o asyncio gather, ou, melhor ainda, o TaskGroup. Ele roda em paralelo e, se uma task falhar, cancela as outras. É concorrência estruturada.
+
+51
+00:08:15,507 --> 00:08:21,385
+Para timeout, em vez de uma corrida com um timer, existe o asyncio timeout, como context manager.
+
+52
+00:08:21,385 --> 00:08:34,352
+E no Node o event loop já existe. Em Python, você liga o loop com asyncio run. Cuidado: uma chamada bloqueante, como time sleep ou a biblioteca requests, trava o loop inteiro. Use as versões async, como o httpx.
+
+53
+00:08:34,352 --> 00:08:43,198
+O CPython tem o GIL, um lock global: só uma thread executa bytecode Python por vez. É parecido com o Node ser single thread para o seu código.
+
+54
+00:08:43,198 --> 00:08:51,515
+Mas o GIL é liberado durante o I/O. Então threads funcionam bem para chamadas bloqueantes de rede e disco, por exemplo com bibliotecas síncronas.
+
+55
+00:08:51,515 --> 00:09:04,298
+Para CPU pesada, threads não escalam. A saída são processos, com o ProcessPoolExecutor, que é o seu worker threads ou cluster. O Python três ponto treze tem uma versão experimental sem GIL, mas em produção ainda vale a regra.
+
+56
+00:09:04,298 --> 00:09:15,275
+No pytest, o setup é feito com fixtures. Em vez de um beforeEach que preenche uma variável, a fixture é injetada pelo nome do parâmetro do teste. É injeção de dependência.
+
+57
+00:09:15,275 --> 00:09:24,543
+O test each vira o parametrize. E repare que é só assert, puro. O pytest reescreve o assert para mostrar os valores quando falha, então você não precisa de expect.
+
+58
+00:09:24,543 --> 00:09:32,464
+Mock: a fixture monkeypatch troca um atributo e desfaz no fim do teste. Para mocks mais completos, existe o unittest mock, com patch.
+
+59
+00:09:32,464 --> 00:09:37,692
+E para testar exceção, pytest raises como context manager. De novo o with.
+
+60
+00:09:37,692 --> 00:09:46,156
+No FastAPI, o Pydantic é o contrato da API. O mesmo modelo valida o body e gera a documentação OpenAPI automaticamente.
+
+61
+00:09:46,156 --> 00:09:57,809
+A rota é declarada com decorator. O parâmetro tipado com o modelo vira o body validado: se for inválido, o FastAPI já responde quatrocentos e vinte e dois. E o tipo de retorno vira o schema da resposta.
+
+62
+00:09:57,809 --> 00:10:07,310
+E o Depends é a injeção de dependência do FastAPI, parecida com a do Nest. Nos testes, você troca a dependência com dependency overrides, sem mock global.
+
+63
+00:10:07,310 --> 00:10:14,763
+Para fechar, as pegadinhas que mais pegam quem vem do JavaScript. A primeira, você já viu: o default mutável.
+
+64
+00:10:14,763 --> 00:10:23,187
+O operador is compara identidade, e o igual igual compara valor. O is não é o triplo igual: use is só para None, e igual igual para o resto.
+
+65
+00:10:23,187 --> 00:10:29,251
+Coleções vazias são falsas, a barra sempre devolve float, e a barra dupla é a divisão inteira.
+
+66
+00:10:29,251 --> 00:10:39,425
+Coroutine sem await não roda, e o GIL define threads para I/O e processos para CPU. Por fim: lista é mutável e tupla não, e chave de dicionário precisa ser imutável.
+
+67
+00:10:39,425 --> 00:10:46,718
+Próximos passos: rode o script verificar, que executa todas as lições, e altere o código para ver o que quebra.
+
+68
+00:10:46,718 --> 00:11:00,850
+Depois, monte um projeto pequeno com FastAPI, Pydantic, SQLAlchemy e pytest, gerenciado com uv, e com ruff e mypy strict no CI desde o primeiro commit. É o que você vai encontrar nas empresas. Bons estudos!

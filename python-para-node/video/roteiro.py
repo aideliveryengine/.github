@@ -1,0 +1,351 @@
+"""Roteiro da aula: cenas e passos.
+
+Cada passo tem:
+- fala:    o que a narração diz (português corrido, nomes técnicos escritos normalmente;
+           a pronúncia é ajustada em gerar.py)
+- legenda: o ponto-chave que aparece na tela (curto; aceita <code>)
+- ts / py: (trecho, n_linhas) a destacar em cada coluna; o trecho é procurado na
+           primeira linha que o contém. None = sem destaque naquela coluna.
+"""
+
+L = "licoes"  # relativo à raiz de python-para-node
+
+CENAS = [
+    # ------------------------------------------------------------------ abertura
+    {"tipo": "card", "titulo": "Python para quem já é sênior em Node",
+     "subtitulo": "Cada conceito: como você faz em TypeScript → como se faz em Python",
+     "itens": [
+         "Ecossistema: npm, package.json, tsc, zod… e os equivalentes",
+         "O \"TypeScript do Python\": type hints + mypy/pyright",
+         "Dados, funções, decorators, iteração, erros e recursos",
+         "Async, GIL e concorrência; testes com pytest; API com FastAPI",
+         "Pegadinhas de entrevista",
+     ],
+     "passos": [
+         {"fala": "Fala! Este é um atalho para quem já é sênior em Node e TypeScript e quer programar Python de verdade, para o dia a dia e para entrevistas.",
+          "legenda": "Sem for e if: o foco é como se escreve Python em produção."},
+         {"fala": "Em cada tópico eu mostro como você faria em TypeScript, do lado esquerdo, e o equivalente em Python, do lado direito. E principalmente: onde a analogia quebra.",
+          "legenda": "TypeScript à esquerda, Python à direita, e onde a analogia <b>quebra</b>."},
+         {"fala": "Todo o código do vídeo está no repositório e foi executado: o TypeScript passa no tsc em modo strict, e o Python passa no mypy em modo strict.",
+          "legenda": "Código real: <code>tsc --strict</code> e <code>mypy --strict</code> passando."},
+     ]},
+
+    # ------------------------------------------------------------------ ecossistema
+    {"tipo": "tabela", "titulo": "Ecossistema: o mapa de-para",
+     "linhas": [
+         ("nvm / fnm", "uv python / pyenv"),
+         ("npm / pnpm", "uv (ou pip + venv, poetry)"),
+         ("package.json", "pyproject.toml"),
+         ("package-lock.json", "uv.lock"),
+         ("node_modules/", ".venv/ (virtualenv)"),
+         ("npx", "uvx / pipx"),
+         ("tsc", "mypy / pyright"),
+         ("eslint + prettier", "ruff (lint + format)"),
+         ("jest / vitest", "pytest"),
+         ("zod", "pydantic"),
+         ("express / nest", "FastAPI / Django"),
+         ("prisma / typeorm", "SQLAlchemy / Django ORM"),
+         ("BullMQ", "Celery / RQ / Dramatiq"),
+     ],
+     "passos": [
+         {"foco": [0, 1, 2, 3], "fala": "Primeiro, o mapa. O nvm vira o uv ou o pyenv. O npm vira o uv, que é o gerenciador moderno, escrito em Rust e muito rápido. O package.json vira o pyproject.toml, e o lockfile vira o uv.lock.",
+          "legenda": "Hoje o padrão é o <code>uv</code>: faz o papel de nvm + npm + npx."},
+         {"foco": [4], "fala": "A diferença conceitual mais importante: em Node, cada projeto tem o seu node_modules automaticamente. Em Python, por padrão, os pacotes vão para uma instalação global. Por isso existe o virtualenv: a pasta ponto venv é o seu node_modules.",
+          "legenda": "Sem <code>.venv</code> você instala no Python global. O <code>uv</code> cria a venv sozinho."},
+         {"foco": [6, 7, 8, 9], "fala": "O tsc vira o mypy ou o Pyright. O ESLint e o Prettier viram um único ruff. O jest vira o pytest. E o zod vira o Pydantic, que é praticamente onipresente em Python moderno.",
+          "legenda": "<code>ruff</code> substitui eslint + prettier; <code>pydantic</code> está em todo lugar."},
+         {"foco": [10, 11, 12], "fala": "No back-end: Express ou Nest viram FastAPI ou Django. Prisma vira SQLAlchemy. E filas como o BullMQ viram Celery ou RQ.",
+          "legenda": "API nova em empresa: FastAPI + Pydantic + SQLAlchemy é a stack mais comum."},
+     ]},
+
+    # ------------------------------------------------------------------ projeto
+    {"tipo": "lado", "titulo": "Projeto e dependências",
+     "ts": f"{L}/projeto/package.json", "py": f"{L}/projeto/pyproject.toml",
+     "rot_ts": "package.json", "rot_py": "pyproject.toml",
+     "passos": [
+         {"ts": ('"name"', 4), "py": ("[project]", 4),
+          "fala": "O pyproject.toml é o package.json. Nome, versão e a versão mínima do Python, que é o engines do Node.",
+          "legenda": "<code>[project]</code> ≈ nome, versão e <code>engines</code>."},
+         {"ts": ('"dependencies"', 4), "py": ("dependencies = [", 4),
+          "fala": "As dependências ficam numa lista, com a versão na mesma string. Não existe acento circunflexo: você escreve maior ou igual.",
+          "legenda": "<code>\"fastapi>=0.115\"</code>: versão dentro da string."},
+         {"ts": ('"devDependencies"', 5), "py": ("[dependency-groups]", 2),
+          "fala": "As dev dependencies viram grupos de dependência. E a configuração das ferramentas, como ruff e mypy, fica no mesmo arquivo, nas seções tool. É como se o eslintrc e o tsconfig morassem dentro do package.json.",
+          "legenda": "<code>[tool.*]</code>: config do ruff/mypy no mesmo arquivo."},
+         {"ts": ('"scripts"', 6), "py": ("[project.scripts]", 2),
+          "fala": "Atenção a uma diferença: o project scripts do Python não é o npm run. Ele cria um executável de linha de comando, como o campo bin do package.json. Para tarefas, a gente usa uv run, ou um Makefile.",
+          "legenda": "<code>[project.scripts]</code> ≈ campo <code>bin</code>, não <code>npm run</code>."},
+     ]},
+    {"tipo": "unico", "titulo": "Comandos do dia a dia", "arq": f"{L}/projeto/comandos.txt",
+     "rot": "Node / npm  →  Python / uv",
+     "passos": [
+         {"foco": ("npm init", 4),
+          "fala": "No dia a dia: uv init cria o projeto, uv add instala e já salva no pyproject, e uv add dash dash dev é o save dev.",
+          "legenda": "<code>uv add</code> ≈ <code>npm install</code> (e já atualiza o lock)."},
+         {"foco": ("npm ci", 3),
+          "fala": "O uv sync com frozen é o npm ci. O uv run roda qualquer coisa dentro da venv, sem você precisar ativar nada. E o uvx é o npx.",
+          "legenda": "<code>uv run</code> dispensa o <code>source .venv/bin/activate</code>."},
+     ]},
+
+    # ------------------------------------------------------------------ módulos
+    {"tipo": "lado", "titulo": "Módulos e imports",
+     "ts": f"{L}/ts/02_modulos.ts", "py": f"{L}/py/m02_modulos.py",
+     "passos": [
+         {"ts": ("export const IMPOSTO", 5), "py": ("IMPOSTO = 0.1", 1),
+          "fala": "Em Python, como em Node, o arquivo é o módulo. Mas não existe export: tudo que está no nível do módulo é importável.",
+          "legenda": "Não existe <code>export</code>: tudo no módulo é público."},
+         {"ts": ("function arredondar", 3), "py": ("# _ na frente", 3),
+          "fala": "Privado é convenção: um underline na frente do nome. Ninguém impede o import, mas o linter e o time entendem que é interno. O dunder all só controla o import asterisco.",
+          "legenda": "<code>_nome</code> = privado por <b>convenção</b>. <code>__all__</code> só afeta <code>import *</code>."},
+         {"ts": ("// Outro arquivo", 1), "py": ("# Outro arquivo", 1),
+          "fala": "Os imports são absolutos, a partir do pacote: from pedidos api ponto precos import com imposto. E repare no estilo: funções e variáveis em snake case, classes em PascalCase.",
+          "legenda": "<code>snake_case</code> para funções/variáveis, <code>PascalCase</code> para classes."},
+         {"ts": ("import.meta.url", 3), "py": ('if __name__ == "__main__"', 2),
+          "fala": "E este é o idioma que você vai ver em todo lugar: if dunder name igual a dunder main. É o equivalente de checar se o arquivo foi executado direto, e não importado.",
+          "legenda": "<code>if __name__ == \"__main__\":</code> ≈ \"rodando direto?\""},
+     ]},
+
+    # ------------------------------------------------------------------ tipos
+    {"tipo": "card", "titulo": "Existe um \"TypeScript do Python\"?",
+     "subtitulo": "Sim, e ele já vem na linguagem: type hints (PEP 484)",
+     "itens": [
+         "A sintaxe de tipos é do próprio Python; o <b>checker</b> é uma ferramenta à parte",
+         "<code>mypy</code> (o clássico) ou <code>pyright</code> (o do VS Code/Pylance) ≈ <code>tsc --noEmit</code>",
+         "Como no TS, os tipos <b>não validam nada em runtime</b>",
+         "Para validar dados de fora (JSON, env): <code>pydantic</code> ≈ <code>zod</code>",
+     ],
+     "passos": [
+         {"fala": "A pergunta que você fez: existe um TypeScript do Python? Existe, e ele já vem na linguagem. São os type hints. Não tem compilação: você escreve as anotações no próprio Python.",
+          "legenda": "Type hints: a sintaxe é nativa, nada de transpilar."},
+         {"fala": "Quem confere os tipos é uma ferramenta separada. O mypy é o clássico, e o Pyright é o do VS Code. Rodar o mypy no CI é o equivalente ao tsc no emit.",
+          "legenda": "<code>mypy --strict</code> no CI ≈ <code>tsc --noEmit</code> com strict."},
+         {"fala": "E igual ao TypeScript: os tipos somem em runtime. Para validar o que vem de fora, como JSON e variáveis de ambiente, você usa o Pydantic, que é o zod do Python.",
+          "legenda": "Tipo não valida em runtime. Dado externo → <code>pydantic</code>."},
+     ]},
+    {"tipo": "lado", "titulo": "Tipagem: interface, union, generics",
+     "ts": f"{L}/ts/03_tipos.ts", "py": f"{L}/py/m03_tipos.py",
+     "passos": [
+         {"ts": ("interface Repositorio", 3), "py": ("class Repositorio[T](Protocol)", 2),
+          "fala": "A interface do TypeScript é estrutural. Em Python, o equivalente exato é o Protocol: qualquer classe que tenha o método buscar com essa assinatura satisfaz o contrato.",
+          "legenda": "<code>interface</code> → <code>Protocol</code> (tipagem <b>estrutural</b>)."},
+         {"ts": ("type Status", 1), "py": ("type Status", 1),
+          "fala": "A union de strings vira Literal. E o alias type existe em Python desde a versão três ponto doze, com a mesma palavra-chave.",
+          "legenda": "<code>\"a\" | \"b\"</code> → <code>Literal[\"a\", \"b\"]</code>; <code>T | None</code> é igual."},
+         {"ts": ("type Usuario", 1), "py": ("class Usuario(TypedDict)", 4),
+          "fala": "O tipo de um objeto literal vira um TypedDict. Na prática, para dados de domínio, você vai preferir dataclass ou Pydantic, que eu mostro já já.",
+          "legenda": "Objeto tipado → <code>TypedDict</code> (ou dataclass/pydantic)."},
+         {"ts": ("class RepoMemoria implements", 7), "py": ("class RepoMemoria:", 7),
+          "fala": "Repare que a classe Python não declara implements. O mypy confere a estrutura na atribuição lá embaixo. E o self é explícito, sempre o primeiro parâmetro do método.",
+          "legenda": "Sem <code>implements</code>; <code>self</code> é explícito."},
+         {"ts": ("function primeiro<T>", 3), "py": ("def primeiro[T]", 2),
+          "fala": "Generics: a partir do três ponto doze, o parâmetro de tipo fica entre colchetes, logo depois do nome. Muito parecido com o TypeScript.",
+          "legenda": "<code>function f&lt;T&gt;</code> → <code>def f[T]</code> (Python 3.12+)."},
+     ]},
+
+    # ------------------------------------------------------------------ validação
+    {"tipo": "lado", "titulo": "Validação em runtime: zod → pydantic",
+     "ts": f"{L}/ts/04_validacao.ts", "py": f"{L}/py/m04_validacao.py",
+     "passos": [
+         {"ts": ("const Item = z.object", 4), "py": ("class Item(BaseModel)", 3),
+          "fala": "No zod, você escreve o schema e deriva o tipo com z infer. No Pydantic é o contrário: a classe já é o tipo e o schema ao mesmo tempo.",
+          "legenda": "zod: schema → tipo. pydantic: a classe é <b>os dois</b>."},
+         {"ts": ("const Pedido = z.object", 5), "py": ("class Pedido(BaseModel)", 4),
+          "fala": "As restrições vêm do Field: maior que zero, tamanho mínimo. E o tipo UUID é convertido de verdade: depois da validação, o campo id é um objeto UUID, não uma string.",
+          "legenda": "<code>Field(gt=0, min_length=1)</code>; tipos são <b>convertidos</b>."},
+         {"ts": ("const p: Pedido = Pedido.parse", 1), "py": ("p = Pedido.model_validate_json", 2),
+          "fala": "Model validate json é o parse. Ele já faz o parse do JSON e a validação numa passada só, em Rust, e é bem rápido.",
+          "legenda": "<code>model_validate_json</code> ≈ <code>Pedido.parse(JSON.parse(...))</code>."},
+         {"ts": ("const r = Pedido.safeParse", 2), "py": ("try:", 4),
+          "fala": "Não tem um safe parse que devolve sucesso ou erro: em Python, a falha é uma exceção, a ValidationError. Esse é o estilo da linguagem: é mais fácil pedir perdão do que permissão.",
+          "legenda": "Sem <code>safeParse</code>: falha = exceção <code>ValidationError</code>."},
+     ]},
+
+    # ------------------------------------------------------------------ classes
+    {"tipo": "lado", "titulo": "Classes e dados: dataclass",
+     "ts": f"{L}/ts/05_classes.ts", "py": f"{L}/py/m05_classes.py",
+     "passos": [
+         {"ts": ("class Dinheiro", 5), "py": ("@dataclass(frozen=True", 4),
+          "fala": "Para objetos de dados, o Python tem a dataclass. Você declara os campos com tipo, e o construtor, a igualdade e a representação são gerados. Frozen é o readonly, e slots economiza memória.",
+          "legenda": "<code>@dataclass</code> gera <code>__init__</code>, <code>__eq__</code> e <code>__repr__</code>."},
+         {"ts": ("equals(o: Dinheiro)", 3), "py": ("print(a + a, a ==", 1),
+          "fala": "No TypeScript você escreve um equals na mão, porque o igual igual igual compara referência. Na dataclass, o igual igual compara os valores dos campos.",
+          "legenda": "<code>==</code> compara <b>valor</b> (via <code>__eq__</code>); <code>is</code> compara identidade."},
+         {"ts": ("somar(o: Dinheiro)", 4), "py": ("def __add__", 4),
+          "fala": "Os métodos com dois underlines, os dunder methods, são o protocolo da linguagem. Dunder add define o operador mais, e dunder str é o toString. É assim que o Python deixa sua classe se comportar como um tipo nativo.",
+          "legenda": "Dunder methods: <code>__add__</code> = <code>+</code>, <code>__str__</code> ≈ <code>toString</code>."},
+         {"ts": ("const a = new Dinheiro(10.5)", 1), "py": ("a = Dinheiro(Decimal", 1),
+          "fala": "E para dinheiro, use Decimal. Ele está na biblioteca padrão, e evita o clássico zero ponto um mais zero ponto dois.",
+          "legenda": "Dinheiro: <code>Decimal(\"10.50\")</code>, sempre a partir de string."},
+     ]},
+
+    # ------------------------------------------------------------------ funções
+    {"tipo": "lado", "titulo": "Funções: argumentos nomeados e a armadilha do default",
+     "ts": f"{L}/ts/06_funcoes.ts", "py": f"{L}/py/m06_funcoes.py",
+     "passos": [
+         {"ts": ("function conectar", 4), "py": ("def conectar", 4),
+          "fala": "Em Node, para parâmetros opcionais, a gente usa um options object com destructuring. Em Python, isso é nativo: tudo depois do asterisco só pode ser passado pelo nome.",
+          "legenda": "Options object → argumentos <b>keyword-only</b> (depois do <code>*</code>)."},
+         {"ts": ("function log", 3), "py": ("def log", 2),
+          "fala": "O asterisco args é o rest parameter, e o dois asteriscos kwargs recebe argumentos nomeados soltos, como um objeto de opções livre. No spread de objeto, você usa dois asteriscos dentro do dicionário.",
+          "legenda": "<code>*args</code> ≈ <code>...rest</code>; <code>{**base}</code> ≈ <code>{...base}</code>."},
+         {"ts": ("function add", 4), "py": ("def add(x: str, lista", 3),
+          "fala": "E aqui está a pegadinha número um de entrevista. Em Python, o valor default é criado uma vez só, quando a função é definida. Se ele for uma lista, todas as chamadas compartilham a mesma lista.",
+          "legenda": "⚠️ Default mutável é criado <b>uma vez</b> e compartilhado."},
+         {"ts": ("console.log(add", 1), "py": ("print(add", 1),
+          "fala": "No JavaScript, a segunda chamada devolve só b. No Python, devolve a e b. A correção é usar None como default e criar a lista dentro da função.",
+          "legenda": "JS: <code>[\"b\"]</code>. Python: <code>['a', 'b']</code>. Use <code>None</code> como default."},
+     ]},
+
+    # ------------------------------------------------------------------ decorators
+    {"tipo": "lado", "titulo": "Decorators: funções que embrulham funções",
+     "ts": f"{L}/ts/07_decorators.ts", "py": f"{L}/py/m07_decorators.py",
+     "passos": [
+         {"ts": ("function comRetry", 4), "py": ("def com_retry", 3),
+          "fala": "Em Node, para adicionar retry a uma função, você escreve uma higher order function. Em Python a ideia é exatamente a mesma: o decorator é só uma função que recebe uma função e devolve outra.",
+          "legenda": "Decorator = higher-order function + açúcar <code>@</code>."},
+         {"ts": ("const buscar = comRetry", 1), "py": ("@com_retry(tentativas=3)", 1),
+          "fala": "A diferença é o açúcar sintático. Arroba com retry em cima da função é a mesma coisa que buscar igual com retry de buscar. Foi exatamente isso que usamos no tutorial do LangWatch, com o arroba langwatch ponto trace.",
+          "legenda": "<code>@d def f</code> ≡ <code>f = d(f)</code>. (É o <code>@langwatch.trace</code>.)"},
+         {"ts": ("return async (...args: A)", 1), "py": ("@functools.wraps(fn)", 2),
+          "fala": "Dois detalhes de sênior. Functools wraps preserva o nome e a docstring da função original. E o ParamSpec, os dois asteriscos P, preserva a assinatura para o type checker, como o tipo A extends unknown array do TypeScript.",
+          "legenda": "<code>functools.wraps</code> + <code>ParamSpec</code> (<code>**P</code>) mantêm a assinatura."},
+     ]},
+
+    # ------------------------------------------------------------------ iteração
+    {"tipo": "lado", "titulo": "Iteração idiomática e truthiness",
+     "ts": f"{L}/ts/08_iteracao.ts", "py": f"{L}/py/m08_iteracao.py",
+     "passos": [
+         {"ts": ("const ativos", 3), "py": ("ativos = [", 3),
+          "fala": "Filter mais map vira uma list comprehension. Object from entries vira uma dict comprehension. E sum com uma generator expression soma sem criar uma lista intermediária.",
+          "legenda": "Comprehensions: <code>[x for x in xs if cond]</code>, <code>{k: v for ...}</code>."},
+         {"ts": ("function* paginas", 7), "py": ("def paginas", 5),
+          "fala": "Generators funcionam como os do JavaScript: yield produz valores sob demanda, e yield from é o yield asterisco. O operador morsa, dois pontos igual, atribui e testa na mesma expressão.",
+          "legenda": "<code>yield from</code> ≈ <code>yield*</code>; walrus <code>:=</code> atribui e testa."},
+         {"ts": ("if ([].length === 0)", 1), "py": ("if not []", 2),
+          "fala": "E cuidado com a truthiness: em JavaScript, array e objeto vazios são verdadeiros. Em Python, lista vazia, dicionário vazio, string vazia, zero e None são falsos. Por isso, em Python, o idioma é if not lista.",
+          "legenda": "Em Python, <code>[]</code>, <code>{}</code>, <code>\"\"</code>, <code>0</code> e <code>None</code> são <b>falsy</b>."},
+     ]},
+
+    # ------------------------------------------------------------------ erros
+    {"tipo": "lado", "titulo": "Erros e recursos: using → with",
+     "ts": f"{L}/ts/09_erros.ts", "py": f"{L}/py/m09_erros.py",
+     "passos": [
+         {"ts": ("class ErroDominio", 2), "py": ("class ErroDominio", 4),
+          "fala": "Exceções de domínio são classes que herdam de Exception. Em Python é muito comum criar uma hierarquia, porque o tratamento é feito pelo tipo.",
+          "legenda": "Hierarquia de exceções: <code>class X(ErroDominio)</code>."},
+         {"ts": ("using conn", 3), "py": ("with abrir_conexao() as conn", 2),
+          "fala": "O using do TypeScript cinco ponto dois é a mesma ideia do with do Python. O with garante que o recurso é fechado ao sair do bloco, mesmo com exceção. Conexão, arquivo, lock, transação: tudo usa with.",
+          "legenda": "<code>with</code> ≈ <code>using</code>: fecha o recurso ao sair do bloco."},
+         {"ts": ("function abrirConexao", 7), "py": ("@contextmanager", 7),
+          "fala": "O jeito mais simples de criar um é o decorator contextmanager: tudo antes do yield é a abertura, e o finally é o dispose.",
+          "legenda": "<code>@contextmanager</code>: antes do <code>yield</code> abre, <code>finally</code> fecha."},
+         {"ts": ("} catch (e)", 4), "py": ("except SaldoInsuficiente", 9),
+          "fala": "O except filtra pelo tipo, sem instanceof. Raise from encadeia a causa, como o cause do Error. E tem o else, que só roda se não houve exceção.",
+          "legenda": "<code>except Tipo as e</code>, <code>raise ... from e</code> e o bloco <code>else</code>."},
+     ]},
+
+    # ------------------------------------------------------------------ async
+    {"tipo": "lado", "titulo": "Async: Promise ansiosa × coroutine preguiçosa",
+     "ts": f"{L}/ts/10_async.ts", "py": f"{L}/py/m10_async.py",
+     "passos": [
+         {"ts": ("async function buscar", 4), "py": ("async def buscar", 3),
+          "fala": "Async e await são quase iguais. Mas tem uma diferença fundamental, que cai muito em entrevista.",
+          "legenda": "<code>async</code>/<code>await</code>: a sintaxe é quase igual…"},
+         {"ts": ("const p = buscar(1)", 2), "py": ("c = buscar(1)", 2),
+          "fala": "Em JavaScript, a Promise é ansiosa: chamou a função, ela já está rodando. Em Python, chamar uma função async só cria um objeto coroutine. Nada roda até alguém dar await, ou criar uma task.",
+          "legenda": "…mas Promise é <b>ansiosa</b> e coroutine é <b>preguiçosa</b>."},
+         {"ts": ("const todos = await Promise.all", 1), "py": ("async with asyncio.TaskGroup", 3),
+          "fala": "O Promise all vira o asyncio gather, ou, melhor ainda, o TaskGroup. Ele roda em paralelo e, se uma task falhar, cancela as outras. É concorrência estruturada.",
+          "legenda": "<code>Promise.all</code> → <code>TaskGroup</code> (cancela as irmãs) ou <code>gather</code>."},
+         {"ts": ("await Promise.race", 1), "py": ("async with asyncio.timeout", 2),
+          "fala": "Para timeout, em vez de uma corrida com um timer, existe o asyncio timeout, como context manager.",
+          "legenda": "Timeout: <code>async with asyncio.timeout(s)</code>."},
+         {"ts": ("// Top-level await", 1), "py": ("asyncio.run(main())", 1),
+          "fala": "E no Node o event loop já existe. Em Python, você liga o loop com asyncio run. Cuidado: uma chamada bloqueante, como time sleep ou a biblioteca requests, trava o loop inteiro. Use as versões async, como o httpx.",
+          "legenda": "Você liga o loop: <code>asyncio.run</code>. Nada de I/O bloqueante dentro dele."},
+     ]},
+
+    # ------------------------------------------------------------------ concorrência
+    {"tipo": "lado", "titulo": "Concorrência e o GIL",
+     "ts": f"{L}/ts/11_concorrencia.ts", "py": f"{L}/py/m11_concorrencia.py",
+     "passos": [
+         {"ts": ("// I/O: o event loop", 2), "py": ("def fib", 2),
+          "fala": "O CPython tem o GIL, um lock global: só uma thread executa bytecode Python por vez. É parecido com o Node ser single thread para o seu código.",
+          "legenda": "GIL: uma thread executa Python por vez (≈ JS single-thread)."},
+         {"ts": None, "py": ("with ThreadPoolExecutor", 2),
+          "fala": "Mas o GIL é liberado durante o I/O. Então threads funcionam bem para chamadas bloqueantes de rede e disco, por exemplo com bibliotecas síncronas.",
+          "legenda": "Threads servem para I/O bloqueante (o GIL é solto no I/O)."},
+         {"ts": ("const w = new Worker", 3), "py": ("with ProcessPoolExecutor", 2),
+          "fala": "Para CPU pesada, threads não escalam. A saída são processos, com o ProcessPoolExecutor, que é o seu worker threads ou cluster. O Python três ponto treze tem uma versão experimental sem GIL, mas em produção ainda vale a regra.",
+          "legenda": "CPU pesada → <b>processos</b> (≈ <code>worker_threads</code>/<code>cluster</code>)."},
+     ]},
+
+    # ------------------------------------------------------------------ testes
+    {"tipo": "lado", "titulo": "Testes: jest/node:test → pytest",
+     "ts": f"{L}/ts/12_testes.test.ts", "py": f"{L}/py/test_m12_testes.py",
+     "passos": [
+         {"ts": ("beforeEach(() =>", 3), "py": ("@pytest.fixture", 3),
+          "fala": "No pytest, o setup é feito com fixtures. Em vez de um beforeEach que preenche uma variável, a fixture é injetada pelo nome do parâmetro do teste. É injeção de dependência.",
+          "legenda": "<code>beforeEach</code> → <code>@pytest.fixture</code>, injetada pelo <b>nome</b>."},
+         {"ts": ("for (const [kg, esperado]", 3), "py": ("@pytest.mark.parametrize", 3),
+          "fala": "O test each vira o parametrize. E repare que é só assert, puro. O pytest reescreve o assert para mostrar os valores quando falha, então você não precisa de expect.",
+          "legenda": "<code>test.each</code> → <code>parametrize</code>; <code>assert</code> puro, sem <code>expect</code>."},
+         {"ts": ("mock.method", 1), "py": ("monkeypatch.setattr", 1),
+          "fala": "Mock: a fixture monkeypatch troca um atributo e desfaz no fim do teste. Para mocks mais completos, existe o unittest mock, com patch.",
+          "legenda": "<code>monkeypatch</code> (desfeito no fim) ou <code>unittest.mock.patch</code>."},
+         {"ts": ("assert.throws", 1), "py": ("with pytest.raises", 2),
+          "fala": "E para testar exceção, pytest raises como context manager. De novo o with.",
+          "legenda": "<code>with pytest.raises(ValueError, match=...)</code>."},
+     ]},
+
+    # ------------------------------------------------------------------ API
+    {"tipo": "lado", "titulo": "API: Express + zod → FastAPI",
+     "ts": f"{L}/ts/13_api.ts", "py": f"{L}/py/m13_api.py",
+     "passos": [
+         {"ts": ("const CriarUsuario", 4), "py": ("class CriarUsuario(BaseModel)", 3),
+          "fala": "No FastAPI, o Pydantic é o contrato da API. O mesmo modelo valida o body e gera a documentação OpenAPI automaticamente.",
+          "legenda": "Model Pydantic = validação + OpenAPI (Swagger em <code>/docs</code>)."},
+         {"ts": ('app.post("/usuarios"', 5), "py": ('@app.post("/usuarios"', 6),
+          "fala": "A rota é declarada com decorator. O parâmetro tipado com o modelo vira o body validado: se for inválido, o FastAPI já responde quatrocentos e vinte e dois. E o tipo de retorno vira o schema da resposta.",
+          "legenda": "Body inválido → 422 automático; o tipo de retorno vira o schema."},
+         {"ts": ("const repo = new RepoUsuarios", 1), "py": ("def get_repo", 2),
+          "fala": "E o Depends é a injeção de dependência do FastAPI, parecida com a do Nest. Nos testes, você troca a dependência com dependency overrides, sem mock global.",
+          "legenda": "<code>Depends</code> ≈ DI do Nest; nos testes: <code>dependency_overrides</code>."},
+     ]},
+
+    # ------------------------------------------------------------------ entrevista
+    {"tipo": "card", "titulo": "Pegadinhas de entrevista",
+     "subtitulo": "As que pegam quem vem do JavaScript",
+     "itens": [
+         "Default mutável (<code>def f(x=[])</code>) é compartilhado entre chamadas",
+         "<code>is</code> ≠ <code>==</code>: <code>is</code> é identidade, <code>==</code> é valor (não é o <code>===</code>)",
+         "<code>[]</code>, <code>{}</code>, <code>\"\"</code>, <code>0</code> são falsy; <code>/</code> sempre dá float, <code>//</code> é divisão inteira",
+         "Coroutine não roda sem <code>await</code>; I/O bloqueante trava o event loop",
+         "GIL: threads para I/O, processos para CPU",
+         "<code>list</code> é mutável, <code>tuple</code> não; chave de dict precisa ser hashable",
+     ],
+     "passos": [
+         {"fala": "Para fechar, as pegadinhas que mais pegam quem vem do JavaScript. A primeira, você já viu: o default mutável.",
+          "legenda": "Default mutável: use <code>None</code>."},
+         {"fala": "O operador is compara identidade, e o igual igual compara valor. O is não é o triplo igual: use is só para None, e igual igual para o resto.",
+          "legenda": "<code>x is None</code>; para valores, <code>==</code>."},
+         {"fala": "Coleções vazias são falsas, a barra sempre devolve float, e a barra dupla é a divisão inteira.",
+          "legenda": "<code>7 / 2 == 3.5</code>; <code>7 // 2 == 3</code>."},
+         {"fala": "Coroutine sem await não roda, e o GIL define threads para I/O e processos para CPU. Por fim: lista é mutável e tupla não, e chave de dicionário precisa ser imutável.",
+          "legenda": "Tupla é imutável e pode ser chave de dict; lista não."},
+     ]},
+    {"tipo": "card", "titulo": "Próximos passos",
+     "subtitulo": "Do jeito que um sênior estudaria",
+     "itens": [
+         "Rode <code>./verificar.sh</code> e mexa no código das lições",
+         "Projeto real: FastAPI + Pydantic + SQLAlchemy + pytest, com <code>uv</code>",
+         "<code>ruff</code> e <code>mypy --strict</code> no CI desde o primeiro commit",
+         "Leia: PEP 8 (estilo), PEP 484/695 (tipos), docs do asyncio",
+     ],
+     "passos": [
+         {"fala": "Próximos passos: rode o script verificar, que executa todas as lições, e altere o código para ver o que quebra.",
+          "legenda": "<code>./verificar.sh</code>: roda e checa tudo."},
+         {"fala": "Depois, monte um projeto pequeno com FastAPI, Pydantic, SQLAlchemy e pytest, gerenciado com uv, e com ruff e mypy strict no CI desde o primeiro commit. É o que você vai encontrar nas empresas. Bons estudos!",
+          "legenda": "FastAPI + Pydantic + SQLAlchemy + pytest, com <code>uv</code>, <code>ruff</code> e <code>mypy</code>."},
+     ]},
+]

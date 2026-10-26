@@ -1,0 +1,10 @@
+# Node / npm                      # Python / uv
+nvm install 22                    uv python install 3.13
+npm init                          uv init
+npm install express               uv add fastapi
+npm install -D vitest             uv add --dev pytest
+npm ci                            uv sync --frozen
+npx tsx src/main.ts               uv run python -m pedidos_api
+npx eslint .                      uvx ruff check .
+node_modules/                     .venv/
+package-lock.json                 uv.lock
