@@ -171,6 +171,9 @@ coisa que só aparece com observabilidade + avaliação rodando sobre o tráfego
 | Arquivo | O que é |
 | --- | --- |
 | `gravacao/tutorial.mp4` | Vídeo do tutorial (13:33, 1440×900), legendas na tela; esperas do LLM aceleradas |
+| `gravacao/tutorial_narrado.mp4` | O mesmo vídeo com narração em áudio (voz neural pt-BR local) |
+| `gravacao/narracao.json` | O texto falado, uma fala por legenda |
+| `gravacao/narrar.py` | Sintetiza as falas, encaixa cada uma no tempo da legenda e gera o MP4 narrado |
 | `gravacao/ROTEIRO.md` | A explicação em texto, por parte, com timestamps do vídeo |
 | `gravacao/tutorial.srt` | As mesmas legendas em SRT |
 | `gravacao/gravar.js` | Roteiro em Playwright: cenas de código, cadastro no LangWatch, chat, traces |
@@ -183,6 +186,20 @@ cadastro foi acelerado ×8 (a UI demorava a responder) e um trecho em que o cliq
 sobre os mesmos dados. O `gravar.js` já usa o atalho `c`, então uma nova gravação não precisa disso.
 
 A conta e a chave do LangWatch que aparecem no vídeo são de uma instalação local descartável.
+
+Narração: voz Piper pt_BR "faber" rodando local via `sherpa-onnx<2` (a 2.x removeu o
+fonemizador embutido). A voz fica num release do GitHub do sherpa-onnx:
+
+```bash
+pip install "sherpa-onnx<2" numpy
+curl -L https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-pt_BR-faber-medium.tar.bz2 | tar xj
+VOZ_DIR=vits-piper-pt_BR-faber-medium python gravacao/narrar.py
+```
+
+Cada fala começa junto com a sua legenda; se não couber até a próxima, o quadro é
+congelado pelo tempo que faltar (foram 2 congelamentos, +1 s). Nomes em inglês têm uma
+grafia "falada" em `narrar.py` (`LangChain` → "Lang Tchêin"), escolhida transcrevendo o
+áudio de volta com Whisper. Mesmo assim saem com sotaque. É a limitação de uma voz pt-BR local.
 
 Para regravar (LangWatch zerado, Ollama no ar, `.env` sem `LANGWATCH_API_KEY`):
 
